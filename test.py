@@ -35,16 +35,19 @@ print(f"Listening on port {port}")
 
 # 장치 연결 상태 확인 함수
 def check_device_connection():
-    managed_objects = bus.get("org/bluez", "/").GetManagedObjects()
-    new_connections = False
-    for path, interfaces in managed_objects.items():
-        if "org.bluez.Device1" in interfaces:
-            device = interfaces["org.bluez.Device1"]
-            if device["Connected"] and path not in connected_devices:
-                connected_devices.add(path)
-                print(f"Device connected: {path}")
-                new_connections = True
-                handle_connection()
+    try:
+        managed_objects = bus.get("org.bluez", "/").GetManagedObjects()
+        new_connections = False
+        for path, interfaces in managed_objects.items():
+            if "org.bluez.Device1" in interfaces:
+                device = interfaces["org.bluez.Device1"]
+                if device["Connected"] and path not in connected_devices:
+                    connected_devices.add(path)
+                    print(f"Device connected: {path}")
+                    new_connections = True
+                    handle_connection()
+    except Exception as e:
+        print(f"Error checking device connection: {e}")
     return True
 
 # 연결된 장치와 데이터 송수신 처리 함수
