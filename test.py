@@ -1,6 +1,7 @@
 from pydbus import SystemBus
 from gi.repository import GLib
 import subprocess
+import time
 
 # 블루투스 장치 초기화
 subprocess.run(["sudo", "hciconfig", "hci0", "up"], check=True)
@@ -22,11 +23,18 @@ adapter.Powered = True
 adapter.Discoverable = True
 adapter.Pairable = True
 
-# 블루투스 서버 설정
-def on_device_connected(device):
-    print(f"Device connected: {device}")
+# 장치 연결 상태 확인 함수
+def check_device_connection():
+    managed_objects = bus.get("org.bluez", "/").GetManagedObjects()
+    for path, interfaces in managed_objects.items():
+        if "org.bluez.Device1" in interfaces:
+            device = interfaces["org.bluez.Device1"]
+            if device["Connected"]:
+                print(f"Device connected: {path}")
+    return True
 
-adapter.connect_to_signal("DeviceConnected", on_device_connected)
+# 주기적으로 장치 연결 상태 확인 (1초마다)
+GLib.timeout_add_seconds(1, check_device_connection)
 
 print("Waiting for connections...")
 
