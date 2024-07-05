@@ -14,7 +14,10 @@ adapter_path = "/org/bluez/hci0"
 adapter = bus.get("org.bluez", adapter_path)
 
 # 블루투스 어댑터를 Discoverable로 설정
-adapter.SetDiscoveryFilter({"Transport": "auto"})
+discovery_filter = {
+    "Transport": GLib.Variant("s", "auto")
+}
+adapter.SetDiscoveryFilter(discovery_filter)
 adapter.Powered = True
 adapter.Discoverable = True
 adapter.Pairable = True
