@@ -1,9 +1,9 @@
 import bluetooth
 import subprocess
 
-# 블루투스 장치 초기화
+# 블루투스 장치 초기화 및 SDP 서비스 추가
 subprocess.run(["sudo", "hciconfig", "hci0", "up"], check=True)
-subprocess.run(["sudo", "sdptool", "add", "SP"], check=True)  # SDP 서비스 추가
+subprocess.run(["sudo", "sdptool", "add", "SP"], check=True)
 
 # 블루투스 서버 설정
 server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
