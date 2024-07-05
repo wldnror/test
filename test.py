@@ -1,4 +1,8 @@
 import bluetooth
+import subprocess
+
+# 블루투스 장치 초기화
+subprocess.run(["sudo", "hciconfig", "hci0", "up"], check=True)
 
 # 블루투스 서버 설정
 server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
