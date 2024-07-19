@@ -23,11 +23,6 @@ def get_local_ip():
             return ip
     return "IP 주소를 가져올 수 없습니다"
 
-# 블루투스 장치 초기화
-os.environ["SDL_AUDIODRIVER"] = "alsa"
-subprocess.run(["sudo", "hciconfig", "hci0", "up"], check=True)
-subprocess.run(["sudo", "sdptool", "add", "SP"], check=True)
-
 # D-Bus 연결 설정
 bus = SystemBus()
 
