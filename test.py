@@ -9,6 +9,7 @@ import time
 MOTOR_PIN_1 = 17  # 첫 번째 모터 핀
 MOTOR_PIN_2 = 18  # 두 번째 모터 핀
 
+GPIO.setwarnings(False)  # 경고 비활성화
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(MOTOR_PIN_1, GPIO.OUT)
 GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
@@ -80,10 +81,11 @@ def handle_connection():
     print(f"Accepted connection from {client_info}")
     try:
         while True:
-            data = client_sock.recv(1024).decode('utf-8')
+            data = client_sock.recv(1024)
             if data:
-                print(f"Received: {data}")
-                if data == "DROP_BATTERY":
+                decoded_data = data.decode('utf-8')
+                print(f"Received: {decoded_data}")
+                if decoded_data == "DROP_BATTERY":
                     print("Received command to drop battery")
                     # 두 모터를 동시에 제어
                     print("Setting motor angles to 90 degrees")  # 모터 제어 시각적 표시
