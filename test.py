@@ -4,7 +4,6 @@ import socket
 from pydbus import SystemBus
 from gi.repository import GLib
 import netifaces
-import pygame
 import time
 import os
 from flask import Flask, request
@@ -51,9 +50,6 @@ server_sock.listen(1)
 port = server_sock.getsockname()[1]
 print(f"Listening on port {port}")
 
-# pygame 초기화
-pygame.mixer.init()
-
 # 현재 스크립트의 디렉토리 경로 설정
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sound_file_path = os.path.join(script_dir, "alert-sound.mp3")
@@ -75,12 +71,7 @@ def handle_connection(client_sock):
                 if data == "DROP_BATTERY":
                     print("Received command to drop battery")
                     # 사운드 파일 재생
-                    pygame.mixer.music.load(sound_file_path)
-                    pygame.mixer.music.play()
-
-                    # 사운드 파일이 끝날 때까지 대기
-                    while pygame.mixer.music.get_busy():
-                        time.sleep(0.1)
+                    subprocess.run(["mpg123", sound_file_path], check=True)
 
                     # 모터 제어 대신 출력 메시지로 대체
                     print("Motor would be activated now (simulated)")
