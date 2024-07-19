@@ -1,24 +1,18 @@
-import RPi.GPIO as GPIO
+import pigpio
 import time
 
 # GPIO 핀 번호 설정
 SERVO_PIN = 17  # 서보 모터를 연결할 GPIO 핀 번호
 
-# GPIO 설정
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(SERVO_PIN, GPIO.OUT)
+# pigpio 설정
+pi = pigpio.pi()
 
-# PWM 설정
-pwm = GPIO.PWM(SERVO_PIN, 50)  # 50Hz 주파수 설정
-pwm.start(0)  # PWM 시작
-
+# 서보 제어 함수
 def set_servo_angle(angle):
-    duty = angle / 18 + 2  # Duty cycle 계산
-    GPIO.output(SERVO_PIN, True)
-    pwm.ChangeDutyCycle(duty)  # Duty cycle 조정
+    # 서보의 각도에 따라 펄스 폭을 계산
+    pulse_width = 500 + (angle / 180) * 2000
+    pi.set_servo_pulsewidth(SERVO_PIN, pulse_width)
     time.sleep(1)  # 서보가 각도로 이동할 시간
-    GPIO.output(SERVO_PIN, False)
-    pwm.ChangeDutyCycle(0)
 
 try:
     while True:
@@ -35,6 +29,6 @@ try:
 except KeyboardInterrupt:
     pass
 
-# 정리
-pwm.stop()
-GPIO.cleanup()
+# 서보 정리
+pi.set_servo_pulsewidth(SERVO_PIN, 0)
+pi.stop()
