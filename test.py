@@ -86,6 +86,7 @@ def handle_connection():
                 if data == "DROP_BATTERY":
                     print("Received command to drop battery")
                     # 두 모터를 동시에 제어
+                    print("Setting motor angles to 90 degrees")  # 모터 제어 시각적 표시
                     set_motor_angle(pwm1, 90)  # 각도를 90도로 설정 (예시)
                     set_motor_angle(pwm2, 90)
                     client_sock.send("Battery drop simulated".encode('utf-8'))
