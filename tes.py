@@ -1,21 +1,40 @@
-#include <Servo.h>  // Servo 라이브러리 포함
+import RPi.GPIO as GPIO
+import time
 
-Servo myServo;  // Servo 객체 생성
+# GPIO 핀 번호 설정
+SERVO_PIN = 17  # 서보 모터를 연결할 GPIO 핀 번호
 
-void setup() {
-  myServo.attach(9);  // 서보를 디지털 핀 9에 연결
-}
+# GPIO 설정
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(SERVO_PIN, GPIO.OUT)
 
-void loop() {
-  // 0도에서 180도까지 서보 이동
-  for (int pos = 0; pos <= 180; pos += 1) {
-    myServo.write(pos);  // 서보를 pos도 위치로 이동
-    delay(15);  // 이동 시간 지연
-  }
+# PWM 설정
+pwm = GPIO.PWM(SERVO_PIN, 50)  # 50Hz 주파수 설정
+pwm.start(0)  # PWM 시작
 
-  // 180도에서 0도까지 서보 이동
-  for (int pos = 180; pos >= 0; pos -= 1) {
-    myServo.write(pos);  // 서보를 pos도 위치로 이동
-    delay(15);  // 이동 시간 지연
-  }
-}
+def set_servo_angle(angle):
+    duty = angle / 18 + 2  # Duty cycle 계산
+    GPIO.output(SERVO_PIN, True)
+    pwm.ChangeDutyCycle(duty)  # Duty cycle 조정
+    time.sleep(1)  # 서보가 각도로 이동할 시간
+    GPIO.output(SERVO_PIN, False)
+    pwm.ChangeDutyCycle(0)
+
+try:
+    while True:
+        # 0도에서 180도까지 서보 모터를 이동
+        for angle in range(0, 181, 10):
+            set_servo_angle(angle)
+            time.sleep(0.5)
+        
+        # 180도에서 0도까지 서보 모터를 이동
+        for angle in range(180, -1, -10):
+            set_servo_angle(angle)
+            time.sleep(0.5)
+
+except KeyboardInterrupt:
+    pass
+
+# 정리
+pwm.stop()
+GPIO.cleanup()
