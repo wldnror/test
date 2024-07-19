@@ -23,9 +23,6 @@ adapter.Powered = True
 adapter.Discoverable = True
 adapter.Pairable = True
 
-# 연결된 장치 목록
-connected_devices = set()
-
 # 블루투스 서버 소켓 설정
 server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 server_sock.bind(("", bluetooth.PORT_ANY))
@@ -33,28 +30,9 @@ server_sock.listen(1)
 port = server_sock.getsockname()[1]
 print(f"Listening on port {port}")
 
-# 장치 연결 상태 확인 함수
-def check_device_connection():
+def handle_connection(client_sock):
     try:
-        managed_objects = bus.get("org.bluez", "/").GetManagedObjects()
-        new_connections = False
-        for path, interfaces in managed_objects.items():
-            if "org.bluez.Device1" in interfaces:
-                device = interfaces["org.bluez.Device1"]
-                if device["Connected"] and path not in connected_devices:
-                    connected_devices.add(path)
-                    print(f"Device connected: {path}")
-                    new_connections = True
-                    handle_connection()
-    except Exception as e:
-        print(f"Error checking device connection: {e}")
-    return True
-
-# 연결된 장치와 데이터 송수신 처리 함수
-def handle_connection():
-    client_sock, client_info = server_sock.accept()
-    print(f"Accepted connection from {client_info}")
-    try:
+        print(f"Accepted connection from {client_sock.getpeername()}")
         while True:
             data = client_sock.recv(1024).decode('utf-8')
             if data:
@@ -66,17 +44,18 @@ def handle_connection():
                     client_sock.send("Battery drop simulated".encode('utf-8'))
             if not data:
                 break
-    except OSError:
-        pass
-    print("Disconnected")
-    client_sock.close()
+    except OSError as e:
+        print(f"Connection error: {e}")
+    finally:
+        print("Disconnected")
+        client_sock.close()
 
-# 주기적으로 장치 연결 상태 확인 (1초마다)
-GLib.timeout_add_seconds(1, check_device_connection)
+# 블루투스 연결 대기 및 처리
+def wait_for_connections():
+    while True:
+        print("Waiting for new connection...")
+        client_sock, client_info = server_sock.accept()
+        handle_connection(client_sock)
 
 print("Waiting for connections...")
-
-# 메인 루프 실행
-GLib.MainLoop().run()
-
-server_sock.close()
+wait_for_connections()
