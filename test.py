@@ -4,6 +4,8 @@ import socket
 from pydbus import SystemBus
 from gi.repository import GLib
 import netifaces
+import pygame
+import time
 
 # 로컬 머신의 IP 주소를 가져오는 함수
 def get_local_ip():
@@ -45,6 +47,9 @@ server_sock.listen(1)
 port = server_sock.getsockname()[1]
 print(f"Listening on port {port}")
 
+# pygame 초기화
+pygame.mixer.init()
+
 def handle_connection(client_sock):
     try:
         print(f"Accepted connection from {client_sock.getpeername()}")
@@ -61,6 +66,14 @@ def handle_connection(client_sock):
                 print(f"Received: {data}")
                 if data == "DROP_BATTERY":
                     print("Received command to drop battery")
+                    # 사운드 파일 재생
+                    pygame.mixer.music.load("alert_sound.mp3")
+                    pygame.mixer.music.play()
+
+                    # 사운드 파일이 끝날 때까지 대기
+                    while pygame.mixer.music.get_busy():
+                        time.sleep(0.1)
+
                     # 모터 제어 대신 출력 메시지로 대체
                     print("Motor would be activated now (simulated)")
                     client_sock.send("Battery drop simulated".encode('utf-8'))
