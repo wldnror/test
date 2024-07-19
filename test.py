@@ -46,15 +46,17 @@ def handle_connection(client_sock):
                 break
     except OSError as e:
         print(f"Connection error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
     finally:
         print("Disconnected")
         client_sock.close()
 
-# 블루투스 연결 대기 및 처리
 def wait_for_connections():
     while True:
         print("Waiting for new connection...")
         client_sock, client_info = server_sock.accept()
+        print(f"Connection established with {client_info}")
         handle_connection(client_sock)
 
 print("Waiting for connections...")
