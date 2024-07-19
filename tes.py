@@ -1,9 +1,6 @@
 import RPi.GPIO as GPIO
 import time
 
-# GPIO 경고 비활성화
-GPIO.setwarnings(False)
-
 # GPIO 핀 번호 설정
 SERVO_PIN = 17  # 서보 모터를 연결할 GPIO 핀 번호
 
