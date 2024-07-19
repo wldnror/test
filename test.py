@@ -6,6 +6,7 @@ from gi.repository import GLib
 import netifaces
 import time
 import os
+import RPi.GPIO as GPIO
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -50,6 +51,31 @@ print(f"Listening on port {port}")
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sound_file_path = os.path.join(script_dir, "alert-sound.mp3")
 
+# 모터 제어 핀 설정
+MOTOR_PIN_1 = 17  # GPIO 핀 번호
+MOTOR_PIN_2 = 27  # GPIO 핀 번호
+
+# GPIO 설정
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(MOTOR_PIN_1, GPIO.OUT)
+GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
+
+# PWM 설정
+pwm_motor_1 = GPIO.PWM(MOTOR_PIN_1, 50)  # 50Hz
+pwm_motor_2 = GPIO.PWM(MOTOR_PIN_2, 50)  # 50Hz
+pwm_motor_1.start(0)
+pwm_motor_2.start(0)
+
+def set_motor_angle(pwm, angle):
+    duty = angle / 18 + 2
+    GPIO.output(MOTOR_PIN_1, True)
+    GPIO.output(MOTOR_PIN_2, True)
+    pwm.ChangeDutyCycle(duty)
+    time.sleep(1)
+    GPIO.output(MOTOR_PIN_1, False)
+    GPIO.output(MOTOR_PIN_2, False)
+    pwm.ChangeDutyCycle(0)
+
 def handle_connection(client_sock):
     try:
         print(f"Accepted connection from {client_sock.getpeername()}")
@@ -69,8 +95,10 @@ def handle_connection(client_sock):
                     # 사운드 파일 재생
                     subprocess.run(["mpg123", sound_file_path], check=True)
 
-                    # 모터 제어 대신 출력 메시지로 대체
-                    print("Motor would be activated now (simulated)")
+                    # 모터 제어
+                    print("Activating motors")
+                    set_motor_angle(pwm_motor_1, 90)  # 90도로 회전
+                    set_motor_angle(pwm_motor_2, 90)  # 90도로 회전
                     client_sock.send("Battery drop simulated".encode('utf-8'))
             if not data:
                 break
@@ -107,9 +135,14 @@ def execute_command():
 
 if __name__ == '__main__':
     import threading
-    # Flask 서버를 별도의 스레드에서 실행
-    flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000))
-    flask_thread.start()
-    
-    # 블루투스 연결 대기
-    wait_for_connections()
+    try:
+        # Flask 서버를 별도의 스레드에서 실행
+        flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000))
+        flask_thread.start()
+        
+        # 블루투스 연결 대기
+        wait_for_connections()
+    finally:
+        pwm_motor_1.stop()
+        pwm_motor_2.stop()
+        GPIO.cleanup()
