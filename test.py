@@ -7,6 +7,9 @@ import netifaces
 import pygame
 import time
 import os
+from flask import Flask, request
+
+app = Flask(__name__)
 
 # 로컬 머신의 IP 주소를 가져오는 함수
 def get_local_ip():
@@ -99,5 +102,27 @@ def wait_for_connections():
         print(f"Connection established with {client_info}")
         handle_connection(client_sock)
 
-print("Waiting for connections...")
-wait_for_connections()
+@app.route('/execute_command', methods=['GET'])
+def execute_command():
+    command = request.args.get('command')
+    if command:
+        print(f"Executing command: {command}")
+        if command == "git pull":
+            subprocess.run(["git", "pull"], check=True)
+            return "Git pull executed", 200
+        elif command == "sudo reboot":
+            subprocess.run(["sudo", "reboot"], check=True)
+            return "Reboot executed", 200
+        else:
+            return "Unknown command", 400
+    else:
+        return "No command provided", 400
+
+if __name__ == '__main__':
+    import threading
+    # Flask 서버를 별도의 스레드에서 실행
+    flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000))
+    flask_thread.start()
+    
+    # 블루투스 연결 대기
+    wait_for_connections()
