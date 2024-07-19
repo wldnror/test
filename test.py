@@ -6,6 +6,7 @@ from gi.repository import GLib
 import netifaces
 import pygame
 import time
+import os
 
 # 로컬 머신의 IP 주소를 가져오는 함수
 def get_local_ip():
@@ -50,6 +51,10 @@ print(f"Listening on port {port}")
 # pygame 초기화
 pygame.mixer.init()
 
+# 현재 스크립트의 디렉토리 경로 설정
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sound_file_path = os.path.join(script_dir, "alert-sound.mp3")
+
 def handle_connection(client_sock):
     try:
         print(f"Accepted connection from {client_sock.getpeername()}")
@@ -67,7 +72,7 @@ def handle_connection(client_sock):
                 if data == "DROP_BATTERY":
                     print("Received command to drop battery")
                     # 사운드 파일 재생
-                    pygame.mixer.music.load("alert_sound.mp3")
+                    pygame.mixer.music.load(sound_file_path)
                     pygame.mixer.music.play()
 
                     # 사운드 파일이 끝날 때까지 대기
