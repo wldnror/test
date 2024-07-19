@@ -66,14 +66,12 @@ pwm_motor_2 = GPIO.PWM(MOTOR_PIN_2, 50)  # 50Hz
 pwm_motor_1.start(0)
 pwm_motor_2.start(0)
 
-def set_motor_angle(pwm, angle):
+def set_motor_angle(pwm, pin, angle):
     duty = angle / 18 + 2
-    GPIO.output(MOTOR_PIN_1, True)
-    GPIO.output(MOTOR_PIN_2, True)
+    GPIO.output(pin, True)
     pwm.ChangeDutyCycle(duty)
     time.sleep(1)
-    GPIO.output(MOTOR_PIN_1, False)
-    GPIO.output(MOTOR_PIN_2, False)
+    GPIO.output(pin, False)
     pwm.ChangeDutyCycle(0)
 
 def handle_connection(client_sock):
@@ -97,8 +95,8 @@ def handle_connection(client_sock):
 
                     # 모터 제어
                     print("Activating motors")
-                    set_motor_angle(pwm_motor_1, 90)  # 90도로 회전
-                    set_motor_angle(pwm_motor_2, 90)  # 90도로 회전
+                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 90)  # 90도로 회전
+                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 90)  # 90도로 회전
                     client_sock.send("Battery drop simulated".encode('utf-8'))
             if not data:
                 break
@@ -136,6 +134,10 @@ def execute_command():
 if __name__ == '__main__':
     import threading
     try:
+        # 모터 초기화
+        set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 0)  # 초기화 위치
+        set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 0)  # 초기화 위치
+
         # Flask 서버를 별도의 스레드에서 실행
         flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000))
         flask_thread.start()
