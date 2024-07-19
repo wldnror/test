@@ -1,147 +1,111 @@
-package com.example.batt
+import bluetooth
+import subprocess
+from pydbus import SystemBus
+from gi.repository import GLib
+import RPi.GPIO as GPIO
+import time
 
-import android.Manifest
-import android.app.Activity
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothSocket
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
-import android.os.Bundle
-import android.widget.Button
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import kotlinx.coroutines.*
-import java.io.IOException
-import java.util.*
+# GPIO 설정
+MOTOR_PIN_1 = 17  # 첫 번째 모터 핀
+MOTOR_PIN_2 = 18  # 두 번째 모터 핀
 
-class MainActivity : AppCompatActivity() {
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(MOTOR_PIN_1, GPIO.OUT)
+GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
 
-    private val REQUEST_ENABLE_BT = 1
-    private val REQUEST_LOCATION_PERMISSIONS = 2
-    private val DEVICE_ADDRESS = "B8:27:EB:43:A9:DD" // 실제 블루투스 장치의 주소로 변경
-    private val UUID_INSECURE = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+pwm1 = GPIO.PWM(MOTOR_PIN_1, 50)  # 50Hz PWM 신호
+pwm2 = GPIO.PWM(MOTOR_PIN_2, 50)
 
-    private var bluetoothAdapter: BluetoothAdapter? = null
-    private var bluetoothSocket: BluetoothSocket? = null
-    private var isConnected = false
-    private lateinit var connectJob: Job
+pwm1.start(0)
+pwm2.start(0)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+def set_motor_angle(pwm, angle):
+    duty = angle / 18 + 2
+    GPIO.output(MOTOR_PIN_1, True)
+    pwm.ChangeDutyCycle(duty)
+    time.sleep(1)
+    GPIO.output(MOTOR_PIN_1, False)
+    pwm.ChangeDutyCycle(0)
 
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+# 블루투스 장치 초기화
+subprocess.run(["sudo", "hciconfig", "hci0", "up"], check=True)
+subprocess.run(["sudo", "sdptool", "add", "SP"], check=True)
 
-        if (bluetoothAdapter == null) {
-            Toast.makeText(this, "블루투스를 사용할 수 없습니다", Toast.LENGTH_LONG).show()
-            finish()
-            return
-        }
+# D-Bus 연결 설정
+bus = SystemBus()
 
-        if (!bluetoothAdapter!!.isEnabled) {
-            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
-        } else {
-            checkPermissionsAndConnect()
-        }
+# 블루투스 어댑터 가져오기
+adapter_path = "/org/bluez/hci0"
+adapter = bus.get("org.bluez", adapter_path)
 
-        val button: Button = findViewById(R.id.button)
-        button.setOnClickListener {
-            if (isConnected) {
-                sendCommand("DROP_BATTERY")
-            } else {
-                Toast.makeText(this, "블루투스가 연결되지 않았습니다", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun checkPermissionsAndConnect() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH_CONNECT),
-                    REQUEST_LOCATION_PERMISSIONS)
-            } else {
-                connectToDeviceInBackground()
-            }
-        } else {
-            connectToDeviceInBackground()
-        }
-    }
-
-    private fun connectToDeviceInBackground() {
-        connectJob = CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val device: BluetoothDevice = bluetoothAdapter!!.getRemoteDevice(DEVICE_ADDRESS)
-                bluetoothSocket = device.createRfcommSocketToServiceRecord(UUID_INSECURE)
-                bluetoothSocket!!.connect()
-                isConnected = true
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "장치에 연결되었습니다", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: IllegalArgumentException) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "유효하지 않은 블루투스 주소입니다", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                isConnected = false
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "연결에 실패했습니다", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun sendCommand(input: String) {
-        if (bluetoothSocket != null) {
-            try {
-                bluetoothSocket!!.outputStream.write(input.toByteArray())
-            } catch (e: IOException) {
-                e.printStackTrace()
-                Toast.makeText(this, "명령 전송 중 오류가 발생했습니다", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_LOCATION_PERMISSIONS) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                connectToDeviceInBackground()
-            } else {
-                Toast.makeText(this, "블루투스 사용을 위해 위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_OK) {
-            checkPermissionsAndConnect()
-        } else {
-            Toast.makeText(this, "블루투스가 활성화되지 않았습니다", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (::connectJob.isInitialized && connectJob.isActive) {
-            connectJob.cancel()
-        }
-        bluetoothSocket?.close()
-    }
+# 블루투스 어댑터를 Discoverable로 설정
+discovery_filter = {
+    "Transport": GLib.Variant("s", "auto")
 }
+adapter.SetDiscoveryFilter(discovery_filter)
+adapter.Powered = True
+adapter.Discoverable = True
+adapter.Pairable = True
+
+# 연결된 장치 목록
+connected_devices = set()
+
+# 블루투스 서버 소켓 설정
+server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+server_sock.bind(("", bluetooth.PORT_ANY))
+server_sock.listen(1)
+port = server_sock.getsockname()[1]
+print(f"Listening on port {port}")
+
+# 장치 연결 상태 확인 함수
+def check_device_connection():
+    try:
+        managed_objects = bus.get("org.bluez", "/").GetManagedObjects()
+        new_connections = False
+        for path, interfaces in managed_objects.items():
+            if "org.bluez.Device1" in interfaces:
+                device = interfaces["org.bluez.Device1"]
+                if device["Connected"] and path not in connected_devices:
+                    connected_devices.add(path)
+                    print(f"Device connected: {path}")
+                    new_connections = True
+                    handle_connection()
+    except Exception as e:
+        print(f"Error checking device connection: {e}")
+    return True
+
+# 연결된 장치와 데이터 송수신 처리 함수
+def handle_connection():
+    client_sock, client_info = server_sock.accept()
+    print(f"Accepted connection from {client_info}")
+    try:
+        while True:
+            data = client_sock.recv(1024).decode('utf-8')
+            if data:
+                print(f"Received: {data}")
+                if data == "DROP_BATTERY":
+                    print("Received command to drop battery")
+                    # 두 모터를 동시에 제어
+                    set_motor_angle(pwm1, 90)  # 각도를 90도로 설정 (예시)
+                    set_motor_angle(pwm2, 90)
+                    client_sock.send("Battery drop simulated".encode('utf-8'))
+            if not data:
+                break
+    except OSError:
+        pass
+    print("Disconnected")
+    client_sock.close()
+
+# 주기적으로 장치 연결 상태 확인 (1초마다)
+GLib.timeout_add_seconds(1, check_device_connection)
+
+print("Waiting for connections...")
+
+# 메인 루프 실행
+GLib.MainLoop().run()
+
+# 청소
+server_sock.close()
+pwm1.stop()
+pwm2.stop()
+GPIO.cleanup()
