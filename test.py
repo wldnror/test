@@ -35,6 +35,7 @@ def handle_connection(client_sock):
         print(f"Accepted connection from {client_sock.getpeername()}")
         while True:
             data = client_sock.recv(1024).decode('utf-8')
+            print(f"Data received: {data}")  # 추가된 디버깅 메시지
             if data:
                 print(f"Received: {data}")
                 if data == "DROP_BATTERY":
