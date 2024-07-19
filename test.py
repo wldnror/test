@@ -3,12 +3,20 @@ import subprocess
 import socket
 from pydbus import SystemBus
 from gi.repository import GLib
+import netifaces
 
 # 로컬 머신의 IP 주소를 가져오는 함수
 def get_local_ip():
-    hostname = socket.gethostname()
-    local_ip = socket.gethostbyname(hostname)
-    return local_ip
+    interfaces = netifaces.interfaces()
+    for interface in interfaces:
+        if interface == 'lo':
+            continue
+        addrs = netifaces.ifaddresses(interface)
+        if netifaces.AF_INET in addrs:
+            ip_info = addrs[netifaces.AF_INET][0]
+            ip = ip_info['addr']
+            return ip
+    return "IP 주소를 가져올 수 없습니다"
 
 # 블루투스 장치 초기화
 subprocess.run(["sudo", "hciconfig", "hci0", "up"], check=True)
