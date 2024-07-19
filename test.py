@@ -2,30 +2,6 @@ import bluetooth
 import subprocess
 from pydbus import SystemBus
 from gi.repository import GLib
-import RPi.GPIO as GPIO
-import time
-
-# GPIO 설정
-MOTOR_PIN_1 = 17  # 첫 번째 모터 핀
-MOTOR_PIN_2 = 18  # 두 번째 모터 핀
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(MOTOR_PIN_1, GPIO.OUT)
-GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
-
-pwm1 = GPIO.PWM(MOTOR_PIN_1, 50)  # 50Hz PWM 신호
-pwm2 = GPIO.PWM(MOTOR_PIN_2, 50)
-
-pwm1.start(0)
-pwm2.start(0)
-
-def set_motor_angle(pwm, angle):
-    duty = angle / 18 + 2
-    GPIO.output(MOTOR_PIN_1, True)
-    pwm.ChangeDutyCycle(duty)
-    time.sleep(1)
-    GPIO.output(MOTOR_PIN_1, False)
-    pwm.ChangeDutyCycle(0)
 
 # 블루투스 장치 초기화
 subprocess.run(["sudo", "hciconfig", "hci0", "up"], check=True)
@@ -85,9 +61,8 @@ def handle_connection():
                 print(f"Received: {data}")
                 if data == "DROP_BATTERY":
                     print("Received command to drop battery")
-                    # 두 모터를 동시에 제어
-                    set_motor_angle(pwm1, 90)  # 각도를 90도로 설정 (예시)
-                    set_motor_angle(pwm2, 90)
+                    # 모터 제어 대신 출력 메시지로 대체
+                    print("Motor would be activated now (simulated)")
                     client_sock.send("Battery drop simulated".encode('utf-8'))
             if not data:
                 break
@@ -104,8 +79,4 @@ print("Waiting for connections...")
 # 메인 루프 실행
 GLib.MainLoop().run()
 
-# 청소
 server_sock.close()
-pwm1.stop()
-pwm2.stop()
-GPIO.cleanup()
