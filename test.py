@@ -52,8 +52,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 sound_file_path = os.path.join(script_dir, "alert-sound.mp3")
 
 # 모터 제어 핀 설정
-MOTOR_PIN_1 = 17  # GPIO 핀 번호
-MOTOR_PIN_2 = 27  # GPIO 핀 번호
+MOTOR_PIN_1 = 18  # GPIO 핀 번호
+MOTOR_PIN_2 = 5  # GPIO 핀 번호
 
 # GPIO 설정
 GPIO.setmode(GPIO.BCM)
