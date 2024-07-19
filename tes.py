@@ -2,7 +2,7 @@ import pigpio
 import time
 
 # GPIO 핀 번호 설정
-SERVO_PIN = 17  # 서보 모터를 연결할 GPIO 핀 번호
+SERVO_PIN = 29 # 서보 모터를 연결할 GPIO 핀 번호
 
 # pigpio 설정
 pi = pigpio.pi()
