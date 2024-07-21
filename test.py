@@ -8,6 +8,7 @@ import time
 import os
 import RPi.GPIO as GPIO
 from flask import Flask, request, jsonify
+import threading
 
 app = Flask(__name__)
 
@@ -74,14 +75,31 @@ def set_motor_angle(pwm, pin, angle):
     GPIO.output(pin, False)
     pwm.ChangeDutyCycle(0)
 
+def monitor_ip_changes(client_sock, current_ip):
+    while True:
+        try:
+            new_ip = get_local_ip()
+            if new_ip != current_ip:
+                current_ip = new_ip
+                client_sock.send(f"LOCAL_IP:{new_ip}".encode('utf-8'))
+                print(f"Sent updated local IP: {new_ip}")
+            time.sleep(5)  # 5초마다 IP 정보 확인
+        except OSError as e:
+            print(f"Error sending IP: {e}")
+            break
+
 def handle_connection(client_sock):
     try:
         print(f"Accepted connection from {client_sock.getpeername()}")
 
-        # 로컬 IP 주소 전송
-        local_ip = get_local_ip()
-        client_sock.send(f"LOCAL_IP:{local_ip}".encode('utf-8'))
-        print(f"Sent local IP: {local_ip}")
+        # 초기 IP 정보 전송 및 변경 모니터링 스레드 시작
+        current_ip = get_local_ip()
+        client_sock.send(f"LOCAL_IP:{current_ip}".encode('utf-8'))
+        print(f"Sent initial local IP: {current_ip}")
+        
+        ip_thread = threading.Thread(target=monitor_ip_changes, args=(client_sock, current_ip))
+        ip_thread.daemon = True
+        ip_thread.start()
 
         while True:
             data = client_sock.recv(1024).decode('utf-8')
@@ -150,7 +168,6 @@ def execute_command():
         return "No command provided", 400
 
 if __name__ == '__main__':
-    import threading
     try:
         # 모터 초기화
         set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 0)  # 초기화 위치
