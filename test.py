@@ -98,6 +98,14 @@ def handle_connection(client_sock):
                     set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 90)  # 90도로 회전
                     set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 90)  # 90도로 회전
                     client_sock.send("Battery drop simulated".encode('utf-8'))
+                elif data == "GIT_PULL":
+                    print("Received command to git pull")
+                    subprocess.run(["git", "pull"], check=True)
+                    client_sock.send("Git pull executed".encode('utf-8'))
+                elif data == "REBOOT":
+                    print("Received command to reboot")
+                    subprocess.run(["sudo", "reboot"], check=True)
+                    client_sock.send("Reboot executed".encode('utf-8'))
             if not data:
                 break
     except OSError as e:
