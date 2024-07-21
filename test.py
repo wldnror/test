@@ -100,11 +100,12 @@ def handle_connection(client_sock):
                     client_sock.send("Battery drop simulated".encode('utf-8'))
                 elif data == "GIT_PULL":
                     print("Received command to git pull")
-                    subprocess.run(["git", "pull"], check=True)
-                    client_sock.send("Git pull executed".encode('utf-8'))
-                    print("Git pull executed, restarting script...")
-                    subprocess.Popen(["python3", os.path.abspath(__file__)])  # 스크립트 재시작
-                    os._exit(0)  # 현재 스크립트 종료
+                    output = subprocess.run(["git", "pull"], capture_output=True, text=True)
+                    client_sock.send(output.stdout.encode('utf-8'))
+                    if "Already up to date." not in output.stdout:
+                        print("Changes detected, restarting script...")
+                        subprocess.Popen(["python3", os.path.abspath(__file__)])  # 스크립트 재시작
+                        os._exit(0)  # 현재 스크립트 종료
                 elif data == "REBOOT":
                     print("Received command to reboot")
                     subprocess.run(["sudo", "reboot"], check=True)
@@ -132,11 +133,14 @@ def execute_command():
     if command:
         print(f"Executing command: {command}")
         if command == "git pull":
-            subprocess.run(["git", "pull"], check=True)
-            print("Git pull executed, restarting script...")
-            subprocess.Popen(["python3", os.path.abspath(__file__)])  # 스크립트 재시작
-            os._exit(0)  # 현재 스크립트 종료
-            return "Git pull executed, restarting script...", 200
+            output = subprocess.run(["git", "pull"], capture_output=True, text=True)
+            if "Already up to date." in output.stdout:
+                return "Already up to date.", 200
+            else:
+                print("Changes detected, restarting script...")
+                subprocess.Popen(["python3", os.path.abspath(__file__)])  # 스크립트 재시작
+                os._exit(0)  # 현재 스크립트 종료
+                return "Git pull executed, restarting script...", 200
         elif command == "sudo reboot":
             subprocess.run(["sudo", "reboot"], check=True)
             return "Reboot executed", 200
