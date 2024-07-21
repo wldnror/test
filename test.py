@@ -77,7 +77,7 @@ def set_motor_angle(pwm, pin, angle):
 def handle_connection(client_sock):
     try:
         print(f"Accepted connection from {client_sock.getpeername()}")
-        
+
         # 로컬 IP 주소 전송
         local_ip = get_local_ip()
         client_sock.send(f"LOCAL_IP:{local_ip}".encode('utf-8'))
