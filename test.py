@@ -7,7 +7,7 @@ import netifaces
 import time
 import os
 import RPi.GPIO as GPIO
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -102,6 +102,9 @@ def handle_connection(client_sock):
                     print("Received command to git pull")
                     subprocess.run(["git", "pull"], check=True)
                     client_sock.send("Git pull executed".encode('utf-8'))
+                    print("Git pull executed, restarting script...")
+                    subprocess.Popen(["python3", os.path.abspath(__file__)])  # 스크립트 재시작
+                    os._exit(0)  # 현재 스크립트 종료
                 elif data == "REBOOT":
                     print("Received command to reboot")
                     subprocess.run(["sudo", "reboot"], check=True)
@@ -130,7 +133,10 @@ def execute_command():
         print(f"Executing command: {command}")
         if command == "git pull":
             subprocess.run(["git", "pull"], check=True)
-            return "Git pull executed", 200
+            print("Git pull executed, restarting script...")
+            subprocess.Popen(["python3", os.path.abspath(__file__)])  # 스크립트 재시작
+            os._exit(0)  # 현재 스크립트 종료
+            return "Git pull executed, restarting script...", 200
         elif command == "sudo reboot":
             subprocess.run(["sudo", "reboot"], check=True)
             return "Reboot executed", 200
