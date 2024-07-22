@@ -40,19 +40,19 @@ def main(stdscr):
     stdscr.addstr(4, 0, f"현재 Motor 2 각도: {angle2}")
 
     while True:
-        stdscr.addstr(6, 0, "Motor 1 각도 입력: ")
+        stdscr.addstr(6, 0, "Motor 1 각도 변경 (시계 반대: 음수, 시계: 양수): ")
         curses.echo()
-        angle1_input = stdscr.getstr(6, 16, 3).decode('utf-8')
+        angle1_change = stdscr.getstr(6, 43, 4).decode('utf-8')
         curses.noecho()
 
-        stdscr.addstr(7, 0, "Motor 2 각도 입력: ")
+        stdscr.addstr(7, 0, "Motor 2 각도 변경 (시계 반대: 음수, 시계: 양수): ")
         curses.echo()
-        angle2_input = stdscr.getstr(7, 16, 3).decode('utf-8')
+        angle2_change = stdscr.getstr(7, 43, 4).decode('utf-8')
         curses.noecho()
 
         try:
-            angle1 = int(angle1_input)
-            angle2 = int(angle2_input)
+            angle1 = angle1 + int(angle1_change)
+            angle2 = angle2 + int(angle2_change)
             if 0 <= angle1 <= 180 and 0 <= angle2 <= 180:
                 set_angle(pwm1, angle1)
                 set_angle(pwm2, angle2)
