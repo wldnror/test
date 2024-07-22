@@ -124,7 +124,7 @@ def handle_connection(client_sock):
                     # 5초 대기
                     time.sleep(5)
 
-                    # 모터를 기본 위치(90도)로 복귀
+                    # 모터를 기본 위치(90도)로 역회전하여 복귀
                     print("Returning motors to 90 degrees")
                     set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 90, calibration_offset_1)
                     set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 90, calibration_offset_2)
