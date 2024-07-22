@@ -57,6 +57,7 @@ MOTOR_PIN_1 = 18  # GPIO 핀 번호
 MOTOR_PIN_2 = 5  # GPIO 핀 번호
 
 # GPIO 설정
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(MOTOR_PIN_1, GPIO.OUT)
 GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
@@ -67,8 +68,12 @@ pwm_motor_2 = GPIO.PWM(MOTOR_PIN_2, 50)  # 50Hz
 pwm_motor_1.start(0)
 pwm_motor_2.start(0)
 
-def set_motor_angle(pwm, pin, angle):
-    duty = angle / 18 + 2
+# 보정값 설정 (실험적으로 결정)
+calibration_offset_1 = 0
+calibration_offset_2 = -2  # Motor 2가 더 많이 움직이는 경우 보정값을 조정
+
+def set_motor_angle(pwm, pin, angle, calibration_offset=0):
+    duty = (angle + calibration_offset) / 18 + 2
     GPIO.output(pin, True)
     pwm.ChangeDutyCycle(duty)
     time.sleep(1)
@@ -111,10 +116,19 @@ def handle_connection(client_sock):
                     # 사운드 파일 재생
                     subprocess.run(["mpg123", sound_file_path], check=True)
 
-                    # 모터 제어
-                    print("Activating motors")
-                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 90)  # 90도로 회전
-                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 90)  # 90도로 회전
+                    # 모터 제어: 130도로 회전
+                    print("Activating motors to 130 degrees")
+                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 130, calibration_offset_1)
+                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 130, calibration_offset_2)
+
+                    # 5초 대기
+                    time.sleep(5)
+
+                    # 모터를 기본 위치(90도)로 복귀
+                    print("Returning motors to 90 degrees")
+                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 90, calibration_offset_1)
+                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 90, calibration_offset_2)
+
                     client_sock.send("Battery drop simulated".encode('utf-8'))
                 elif data == "GIT_PULL":
                     print("Received command to git pull")
@@ -170,8 +184,8 @@ def execute_command():
 if __name__ == '__main__':
     try:
         # 모터 초기화
-        set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 0)  # 초기화 위치
-        set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 0)  # 초기화 위치
+        set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 90, calibration_offset_1)  # 초기화 위치
+        set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 90, calibration_offset_2)  # 초기화 위치
 
         # Flask 서버를 별도의 스레드에서 실행
         flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000))
