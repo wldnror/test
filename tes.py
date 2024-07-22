@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
 import time
-import pygame
+import curses
 
 # GPIO 핀 번호
 MOTOR_PIN_1 = 18
@@ -31,45 +31,43 @@ angle2 = 90
 set_angle(pwm1, angle1)
 set_angle(pwm2, angle2)
 
-# pygame 초기화
-pygame.init()
-screen = pygame.display.set_mode((100, 100))
+def main(stdscr):
+    global angle1, angle2
+    
+    curses.curs_set(0)  # 커서 숨기기
+    stdscr.nodelay(1)   # 비차단 모드
+    stdscr.timeout(100) # 100ms마다 화면 갱신
+
+    while True:
+        key = stdscr.getch()
+
+        if key == ord('a'):  # 좌측으로 이동
+            angle1 = max(0, angle1 - 10)
+            angle2 = max(0, angle2 - 10)
+            set_angle(pwm1, angle1)
+            set_angle(pwm2, angle2)
+            stdscr.addstr(0, 0, f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
+            stdscr.refresh()
+
+        elif key == ord('d'):  # 우측으로 이동
+            angle1 = min(180, angle1 + 10)
+            angle2 = min(180, angle2 + 10)
+            set_angle(pwm1, angle1)
+            set_angle(pwm2, angle2)
+            stdscr.addstr(0, 0, f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
+            stdscr.refresh()
+
+        elif key == ord('q'):  # 프로그램 종료
+            break
+
+        time.sleep(0.1)  # 키 입력 딜레이
 
 try:
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_a:  # 좌측으로 이동
-                    angle1 = max(0, angle1 - 10)
-                    angle2 = max(0, angle2 - 10)
-                    set_angle(pwm1, angle1)
-                    set_angle(pwm2, angle2)
-                    print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
-                    time.sleep(0.2)  # 키 입력 딜레이
-
-                if event.key == pygame.K_d:  # 우측으로 이동
-                    angle1 = min(180, angle1 + 10)
-                    angle2 = min(180, angle2 + 10)
-                    set_angle(pwm1, angle1)
-                    set_angle(pwm2, angle2)
-                    print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
-                    time.sleep(0.2)  # 키 입력 딜레이
-
-                if event.key == pygame.K_q:  # 프로그램 종료
-                    running = False
-
-        pygame.display.flip()
-
+    curses.wrapper(main)
 except KeyboardInterrupt:
     pass
-
 finally:
     # 종료
     pwm1.stop()
     pwm2.stop()
     GPIO.cleanup()
-    pygame.quit()
