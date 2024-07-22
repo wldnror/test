@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
 import time
-from inputs import get_key
+import pygame
 
 # GPIO 핀 번호
 MOTOR_PIN_1 = 18
@@ -31,35 +31,38 @@ angle2 = 90
 set_angle(pwm1, angle1)
 set_angle(pwm2, angle2)
 
+# pygame 초기화
+pygame.init()
+screen = pygame.display.set_mode((100, 100))
+
 try:
-    while True:
-        events = get_key()
-        for event in events:
-            if event.ev_type == 'Key':
-                if event.state == 1:  # 키 눌림 상태
-                    if event.code == 'KEY_A':  # 좌측으로 이동
-                        angle1 = max(0, angle1 - 10)
-                        angle2 = max(0, angle2 - 10)
-                        set_angle(pwm1, angle1)
-                        set_angle(pwm2, angle2)
-                        print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
-                        time.sleep(0.2)  # 키 입력 딜레이
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_a:  # 좌측으로 이동
+                    angle1 = max(0, angle1 - 10)
+                    angle2 = max(0, angle2 - 10)
+                    set_angle(pwm1, angle1)
+                    set_angle(pwm2, angle2)
+                    print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
 
-                    if event.code == 'KEY_D':  # 우측으로 이동
-                        angle1 = min(180, angle1 + 10)
-                        angle2 = min(180, angle2 + 10)
-                        set_angle(pwm1, angle1)
-                        set_angle(pwm2, angle2)
-                        print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
-                        time.sleep(0.2)  # 키 입력 딜레이
+                if event.key == pygame.K_d:  # 우측으로 이동
+                    angle1 = min(180, angle1 + 10)
+                    angle2 = min(180, angle2 + 10)
+                    set_angle(pwm1, angle1)
+                    set_angle(pwm2, angle2)
+                    print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
 
-                    if event.code == 'KEY_Q':  # 프로그램 종료
-                        raise KeyboardInterrupt
+                if event.key == pygame.K_q:  # 프로그램 종료
+                    running = False
 
 except KeyboardInterrupt:
     pass
 
-# 종료
-pwm1.stop()
-pwm2.stop()
-GPIO.cleanup()
+finally:
+    # 종료
+    pwm1.stop()
+    pwm2.stop()
+    GPIO.cleanup()
+    pygame.quit()
