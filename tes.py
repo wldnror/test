@@ -1,34 +1,56 @@
-import pigpio
+import RPi.GPIO as GPIO
 import time
+import getch
 
-# GPIO 핀 번호 설정
-SERVO_PIN = 5 # 서보 모터를 연결할 GPIO 핀 번호
+# GPIO 핀 번호
+MOTOR_PIN_1 = 18
+MOTOR_PIN_2 = 5
 
-# pigpio 설정
-pi = pigpio.pi()
+# GPIO 설정
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(MOTOR_PIN_1, GPIO.OUT)
+GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
 
-# 서보 제어 함수
-def set_servo_angle(angle):
-    # 서보의 각도에 따라 펄스 폭을 계산
-    pulse_width = 500 + (angle / 180) * 2000
-    pi.set_servo_pulsewidth(SERVO_PIN, pulse_width)
-    time.sleep(1)  # 서보가 각도로 이동할 시간
+# 서보 모터 제어를 위한 PWM 설정
+pwm1 = GPIO.PWM(MOTOR_PIN_1, 50)  # 50Hz PWM 신호
+pwm2 = GPIO.PWM(MOTOR_PIN_2, 50)  # 50Hz PWM 신호
+
+pwm1.start(0)
+pwm2.start(0)
+
+def set_angle(pwm, angle):
+    duty = 2 + (angle / 18)
+    pwm.ChangeDutyCycle(duty)
+    time.sleep(0.5)
+    pwm.ChangeDutyCycle(0)
+
+# 초기 각도 설정
+angle1 = 90
+angle2 = 90
+set_angle(pwm1, angle1)
+set_angle(pwm2, angle2)
 
 try:
     while True:
-        # 0도에서 180도까지 서보 모터를 이동
-        for angle in range(0, 181, 10):
-            set_servo_angle(angle)
-            time.sleep(0.5)
+        key = getch.getch()
         
-        # 180도에서 0도까지 서보 모터를 이동
-        for angle in range(180, -1, -10):
-            set_servo_angle(angle)
-            time.sleep(0.5)
+        if key == 'a':  # 좌측으로 이동
+            angle1 = max(0, angle1 - 10)
+            angle2 = max(0, angle2 - 10)
+        elif key == 'd':  # 우측으로 이동
+            angle1 = min(180, angle1 + 10)
+            angle2 = min(180, angle2 + 10)
+        elif key == 'q':  # 프로그램 종료
+            break
+        
+        set_angle(pwm1, angle1)
+        set_angle(pwm2, angle2)
+        print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
 
 except KeyboardInterrupt:
     pass
 
-# 서보 정리
-pi.set_servo_pulsewidth(SERVO_PIN, 0)
-pi.stop()
+# 종료
+pwm1.stop()
+pwm2.stop()
+GPIO.cleanup()
