@@ -118,8 +118,8 @@ def handle_connection(client_sock):
 
                     # 모터 제어: 130도로 회전
                     print("Activating motors to 130 degrees")
-                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 130, calibration_offset_1)
-                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 130, calibration_offset_2)
+                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 50, calibration_offset_1)
+                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 50, calibration_offset_2)
 
                     # 5초 대기
                     time.sleep(5)
