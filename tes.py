@@ -39,6 +39,9 @@ try:
     running = True
     while running:
         for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:  # 좌측으로 이동
                     angle1 = max(0, angle1 - 10)
@@ -46,6 +49,7 @@ try:
                     set_angle(pwm1, angle1)
                     set_angle(pwm2, angle2)
                     print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
+                    time.sleep(0.2)  # 키 입력 딜레이
 
                 if event.key == pygame.K_d:  # 우측으로 이동
                     angle1 = min(180, angle1 + 10)
@@ -53,9 +57,12 @@ try:
                     set_angle(pwm1, angle1)
                     set_angle(pwm2, angle2)
                     print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
+                    time.sleep(0.2)  # 키 입력 딜레이
 
                 if event.key == pygame.K_q:  # 프로그램 종료
                     running = False
+
+        pygame.display.flip()
 
 except KeyboardInterrupt:
     pass
