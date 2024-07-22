@@ -25,41 +25,45 @@ def set_angle(pwm, angle):
     time.sleep(0.5)
     pwm.ChangeDutyCycle(0)
 
-# 초기 각도 설정
-angle1 = 90
-angle2 = 90
-set_angle(pwm1, angle1)
-set_angle(pwm2, angle2)
-
 def main(stdscr):
-    global angle1, angle2
-    
-    curses.curs_set(0)  # 커서 숨기기
-    stdscr.nodelay(1)   # 비차단 모드
-    stdscr.timeout(100) # 100ms마다 화면 갱신
+    curses.curs_set(1)  # 커서 보이기
+    stdscr.nodelay(0)   # 차단 모드 (사용자 입력 기다림)
+
+    angle1 = 90
+    angle2 = 90
+    set_angle(pwm1, angle1)
+    set_angle(pwm2, angle2)
+
+    stdscr.addstr(0, 0, "서보 모터 제어 프로그램")
+    stdscr.addstr(1, 0, "각도를 입력하고 Enter를 누르세요 (0-180)")
+    stdscr.addstr(3, 0, f"현재 Motor 1 각도: {angle1}")
+    stdscr.addstr(4, 0, f"현재 Motor 2 각도: {angle2}")
 
     while True:
-        key = stdscr.getch()
+        stdscr.addstr(6, 0, "Motor 1 각도 입력: ")
+        curses.echo()
+        angle1_input = stdscr.getstr(6, 16, 3).decode('utf-8')
+        curses.noecho()
 
-        if key == ord('a'):  # 좌측으로 이동
-            angle1 = max(0, angle1 - 10)
-            angle2 = max(0, angle2 - 10)
-            set_angle(pwm1, angle1)
-            set_angle(pwm2, angle2)
-            stdscr.addstr(0, 0, f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
-            stdscr.refresh()
+        stdscr.addstr(7, 0, "Motor 2 각도 입력: ")
+        curses.echo()
+        angle2_input = stdscr.getstr(7, 16, 3).decode('utf-8')
+        curses.noecho()
 
-        elif key == ord('d'):  # 우측으로 이동
-            angle1 = min(180, angle1 + 10)
-            angle2 = min(180, angle2 + 10)
-            set_angle(pwm1, angle1)
-            set_angle(pwm2, angle2)
-            stdscr.addstr(0, 0, f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
-            stdscr.refresh()
+        try:
+            angle1 = int(angle1_input)
+            angle2 = int(angle2_input)
+            if 0 <= angle1 <= 180 and 0 <= angle2 <= 180:
+                set_angle(pwm1, angle1)
+                set_angle(pwm2, angle2)
+                stdscr.addstr(3, 0, f"현재 Motor 1 각도: {angle1}    ")
+                stdscr.addstr(4, 0, f"현재 Motor 2 각도: {angle2}    ")
+            else:
+                stdscr.addstr(8, 0, "각도는 0에서 180 사이여야 합니다. ")
+        except ValueError:
+            stdscr.addstr(8, 0, "유효한 숫자를 입력하세요.          ")
 
-        elif key == ord('q'):  # 프로그램 종료
-            break
-
+        stdscr.refresh()
         time.sleep(0.1)  # 키 입력 딜레이
 
 try:
