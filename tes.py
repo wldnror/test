@@ -1,12 +1,13 @@
 import RPi.GPIO as GPIO
 import time
-import keyboard
+from inputs import get_key
 
 # GPIO 핀 번호
 MOTOR_PIN_1 = 18
 MOTOR_PIN_2 = 5
 
 # GPIO 설정
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(MOTOR_PIN_1, GPIO.OUT)
 GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
@@ -32,24 +33,28 @@ set_angle(pwm2, angle2)
 
 try:
     while True:
-        if keyboard.is_pressed('a'):  # 좌측으로 이동
-            angle1 = max(0, angle1 - 10)
-            angle2 = max(0, angle2 - 10)
-            set_angle(pwm1, angle1)
-            set_angle(pwm2, angle2)
-            print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
-            time.sleep(0.2)  # 키 입력 딜레이
+        events = get_key()
+        for event in events:
+            if event.ev_type == 'Key':
+                if event.state == 1:  # 키 눌림 상태
+                    if event.code == 'KEY_A':  # 좌측으로 이동
+                        angle1 = max(0, angle1 - 10)
+                        angle2 = max(0, angle2 - 10)
+                        set_angle(pwm1, angle1)
+                        set_angle(pwm2, angle2)
+                        print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
+                        time.sleep(0.2)  # 키 입력 딜레이
 
-        if keyboard.is_pressed('d'):  # 우측으로 이동
-            angle1 = min(180, angle1 + 10)
-            angle2 = min(180, angle2 + 10)
-            set_angle(pwm1, angle1)
-            set_angle(pwm2, angle2)
-            print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
-            time.sleep(0.2)  # 키 입력 딜레이
+                    if event.code == 'KEY_D':  # 우측으로 이동
+                        angle1 = min(180, angle1 + 10)
+                        angle2 = min(180, angle2 + 10)
+                        set_angle(pwm1, angle1)
+                        set_angle(pwm2, angle2)
+                        print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
+                        time.sleep(0.2)  # 키 입력 딜레이
 
-        if keyboard.is_pressed('q'):  # 프로그램 종료
-            break
+                    if event.code == 'KEY_Q':  # 프로그램 종료
+                        raise KeyboardInterrupt
 
 except KeyboardInterrupt:
     pass
