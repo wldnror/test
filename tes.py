@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
 import time
-import getch
+import keyboard
 
 # GPIO 핀 번호
 MOTOR_PIN_1 = 18
@@ -32,20 +32,24 @@ set_angle(pwm2, angle2)
 
 try:
     while True:
-        key = getch.getch()
-        
-        if key == 'a':  # 좌측으로 이동
+        if keyboard.is_pressed('a'):  # 좌측으로 이동
             angle1 = max(0, angle1 - 10)
             angle2 = max(0, angle2 - 10)
-        elif key == 'd':  # 우측으로 이동
+            set_angle(pwm1, angle1)
+            set_angle(pwm2, angle2)
+            print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
+            time.sleep(0.2)  # 키 입력 딜레이
+
+        if keyboard.is_pressed('d'):  # 우측으로 이동
             angle1 = min(180, angle1 + 10)
             angle2 = min(180, angle2 + 10)
-        elif key == 'q':  # 프로그램 종료
+            set_angle(pwm1, angle1)
+            set_angle(pwm2, angle2)
+            print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
+            time.sleep(0.2)  # 키 입력 딜레이
+
+        if keyboard.is_pressed('q'):  # 프로그램 종료
             break
-        
-        set_angle(pwm1, angle1)
-        set_angle(pwm2, angle2)
-        print(f"Motor 1 angle: {angle1}, Motor 2 angle: {angle2}")
 
 except KeyboardInterrupt:
     pass
