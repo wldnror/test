@@ -64,7 +64,7 @@ GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
 
 # PWM 설정
 pwm_motor_1 = GPIO.PWM(MOTOR_PIN_1, 50)  # 50Hz
-pwm_motor_2 = GPIO.PWM(MOTOR_PIN_2, 10)  # 50Hz
+pwm_motor_2 = GPIO.PWM(MOTOR_PIN_2, 50)  # 50Hz
 pwm_motor_1.start(0)
 pwm_motor_2.start(0)
 
@@ -76,7 +76,7 @@ def set_motor_angle(pwm, pin, angle, calibration_offset=0):
     duty = (angle + calibration_offset) / 18 + 2
     GPIO.output(pin, True)
     pwm.ChangeDutyCycle(duty)
-    time.sleep(1)
+    time.sleep(0.5)  # 서보 모터가 목표 각도에 도달할 시간을 줌
     GPIO.output(pin, False)
     pwm.ChangeDutyCycle(0)
 
@@ -118,16 +118,16 @@ def handle_connection(client_sock):
 
                     # 모터 제어: 130도로 회전
                     print("Activating motors to 130 degrees")
-                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 1, calibration_offset_1)
-                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 50, calibration_offset_2)
+                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 130, calibration_offset_1)
+                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 130, calibration_offset_2)
 
                     # 5초 대기
                     time.sleep(5)
 
                     # 모터를 기본 위치(90도)로 역회전하여 복귀
                     print("Returning motors to 90 degrees")
-                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 1, calibration_offset_1)
-                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 30, calibration_offset_2)
+                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 90, calibration_offset_1)
+                    set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 90, calibration_offset_2)
 
                     client_sock.send("Battery drop simulated".encode('utf-8'))
                 elif data == "GIT_PULL":
