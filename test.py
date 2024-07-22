@@ -118,7 +118,7 @@ def handle_connection(client_sock):
 
                     # 모터 제어: 130도로 회전
                     print("Activating motors to 130 degrees")
-                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 10, calibration_offset_1)
+                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 1, calibration_offset_1)
                     set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 50, calibration_offset_2)
 
                     # 5초 대기
@@ -126,7 +126,7 @@ def handle_connection(client_sock):
 
                     # 모터를 기본 위치(90도)로 역회전하여 복귀
                     print("Returning motors to 90 degrees")
-                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 10, calibration_offset_1)
+                    set_motor_angle(pwm_motor_1, MOTOR_PIN_1, 1, calibration_offset_1)
                     set_motor_angle(pwm_motor_2, MOTOR_PIN_2, 30, calibration_offset_2)
 
                     client_sock.send("Battery drop simulated".encode('utf-8'))
