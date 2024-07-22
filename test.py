@@ -63,8 +63,8 @@ GPIO.setup(MOTOR_PIN_1, GPIO.OUT)
 GPIO.setup(MOTOR_PIN_2, GPIO.OUT)
 
 # PWM 설정
-pwm_motor_1 = GPIO.PWM(MOTOR_PIN_1, 50)  # 50Hz
-pwm_motor_2 = GPIO.PWM(MOTOR_PIN_2, 50)  # 50Hz
+pwm_motor_1 = GPIO.PWM(MOTOR_PIN_1, 30)  # 50Hz
+pwm_motor_2 = GPIO.PWM(MOTOR_PIN_2, 10)  # 50Hz
 pwm_motor_1.start(0)
 pwm_motor_2.start(0)
 
