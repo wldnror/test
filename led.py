@@ -4,7 +4,7 @@ import time
 
 # LED 스트립 설정
 LED_COUNT = 220       # LED 개수
-LED_PIN = board.D21   # GPIO 핀 번호
+LED_PIN = board.D18   # GPIO 핀 번호
 LED_BRIGHTNESS = 0.1  # LED 밝기 (0.0에서 1.0 사이)
 
 # 각 줄에 할당된 LED 개수
